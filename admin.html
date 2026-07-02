@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DE ORDINAIRE — ADMIN</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root{
+    --ink:#2b2a28; --bg:#f4f1ea; --card:#ffffff; --line:#e6e1d5;
+    --accent:#c9b48a; --navy:#1F3864; --green:#4a7c59; --red:#a4442e;
+    --ff:'Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:var(--ff);font-size:14px;line-height:1.6}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  input,select,textarea{font-family:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:#fff;width:100%}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink)}
+
+  .layout{display:flex;min-height:100vh}
+  /* ---------- sidebar ---------- */
+  aside{width:230px;background:#171512;color:#d8d2c4;padding:26px 0;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+  .slogo{padding:0 24px 22px;border-bottom:1px solid rgba(216,210,196,.12);margin-bottom:18px}
+  .slogo .t{font-size:17px;letter-spacing:.28em;color:#efe9dd}
+  .slogo .s{font-size:9.5px;letter-spacing:.3em;color:var(--accent);margin-top:4px}
+  .snav{flex:1}
+  .snav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:12px 24px;font-size:13.5px;color:#b6b0a2;transition:.25s;border-left:2px solid transparent}
+  .snav button:hover{color:#efe9dd;background:rgba(201,180,138,.06)}
+  .snav button.on{color:#efe9dd;background:rgba(201,180,138,.1);border-left-color:var(--accent)}
+  .snav button.locked{opacity:.32;pointer-events:none}
+  .snav .dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.5}
+  .sfoot{padding:18px 24px 0;border-top:1px solid rgba(216,210,196,.12);font-size:11px;color:#7d786c}
+  /* ---------- main ---------- */
+  main{flex:1;padding:26px 32px 60px;min-width:0}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;gap:16px;flex-wrap:wrap}
+  .topbar h1{font-size:20px;font-weight:600;letter-spacing:.02em}
+  .topbar .sub{font-size:12px;color:#8b8578;margin-top:2px}
+  .roles{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px}
+  .roles label{font-size:12px;color:#8b8578}
+  .roles select{width:auto;padding:6px 10px;font-size:12.5px}
+  .rolebadge{font-size:11px;padding:4px 10px;border-radius:20px;background:var(--navy);color:#fff;letter-spacing:.06em}
+  .rolebadge.viewer{background:#8b8578}
+  .rolebadge.op{background:var(--green)}
+
+  .grid{display:grid;gap:18px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:2fr 1fr}
+  @media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}.g3,.g2{grid-template-columns:1fr}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;box-shadow:0 4px 16px rgba(30,25,15,.04)}
+  .card h3{font-size:13px;font-weight:600;letter-spacing:.04em;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+  .card h3 .more{font-size:11px;color:#8b8578;font-weight:400}
+  .kpi .v{font-size:26px;font-weight:700;letter-spacing:-.01em}
+  .kpi .l{font-size:12px;color:#8b8578;margin-bottom:6px}
+  .kpi .d{font-size:11.5px;margin-top:6px}
+  .up{color:var(--green)} .down{color:var(--red)}
+  canvas{width:100%;display:block}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{font-size:11px;letter-spacing:.08em;color:#8b8578;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-weight:600}
+  td{padding:10px;border-bottom:1px solid #f0ece1;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#faf8f2}
+  .thumb{width:42px;height:42px;border-radius:8px;object-fit:cover;background:#eee;display:block}
+  .bdg{display:inline-block;font-size:10.5px;padding:3px 9px;border-radius:20px;letter-spacing:.03em}
+  .bdg.sale{background:#e8f0e9;color:var(--green)}
+  .bdg.soldout{background:#f7e8e4;color:var(--red)}
+  .bdg.hidden{background:#eeeae0;color:#8b8578}
+  .bdg.on{background:#e8ecf5;color:var(--navy)}
+  .bdg.off{background:#eeeae0;color:#8b8578}
+
+  .toggle{position:relative;width:36px;height:20px;border-radius:20px;background:#d5cfc0;transition:.3s;flex-shrink:0}
+  .toggle::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.3s}
+  .toggle.on{background:var(--green)}
+  .toggle.on::after{left:18px}
+  .toggle.dis{opacity:.4;pointer-events:none}
+
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:9px;font-size:12.5px;font-weight:500;border:1px solid var(--line);background:#fff;transition:.25s}
+  .btn:hover{border-color:var(--ink)}
+  .btn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .btn.pri:hover{opacity:.85}
+  .btn.sm{padding:6px 11px;font-size:11.5px;border-radius:7px}
+  .btn:disabled{opacity:.4;pointer-events:none}
+
+  .toolrow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .toolrow .filters{display:flex;gap:8px;flex-wrap:wrap}
+  .toolrow input{width:220px}
+
+  /* modal */
+  .mwrap{position:fixed;inset:0;background:rgba(20,17,12,.5);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+  .mwrap.open{display:flex}
+  .modal{background:#fff;border-radius:16px;width:min(560px,94vw);max-height:90vh;overflow-y:auto;padding:28px}
+  .modal h2{font-size:16px;font-weight:600;margin-bottom:20px;display:flex;justify-content:space-between}
+  .modal h2 button{font-size:18px;color:#8b8578}
+  .modal label{display:block;font-size:11.5px;color:#8b8578;margin:14px 0 5px;font-weight:500}
+  .mrow{display:flex;gap:12px}
+  .mrow>div{flex:1}
+  .mfoot{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}
+  .imgdrop{border:1.5px dashed var(--line);border-radius:10px;padding:18px;text-align:center;color:#8b8578;font-size:12px;cursor:pointer;transition:.25s}
+  .imgdrop:hover{border-color:var(--accent);color:var(--ink)}
+  .imgdrop img{max-height:110px;border-radius:8px;margin-bottom:8px}
+
+  /* banner slots */
+  .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:1100px){.slots{grid-template-columns:repeat(2,1fr)}}
+  .slot{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  .slot .simg{height:120px;background-size:cover;background-position:center;position:relative}
+  .slot .simg .stag{position:absolute;top:8px;left:8px;font-size:10px;background:rgba(20,17,12,.65);color:#fff;padding:3px 8px;border-radius:12px}
+  .slot .sbody{padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+  .slot .sname{font-size:12.5px;font-weight:500}
+  .slot .sspec{font-size:10.5px;color:#8b8578}
+
+  /* perm matrix */
+  .perm td:first-child{font-weight:500}
+  .perm input[type=checkbox]{width:16px;height:16px;accent-color:var(--navy)}
+
+  /* preview popup */
+  .pvwrap{position:fixed;inset:0;background:rgba(15,13,10,.72);z-index:120;display:none;align-items:center;justify-content:center}
+  .pvwrap.open{display:flex}
+  .pv{background:#171512;color:#efe9dd;width:min(400px,90vw);border-radius:4px;overflow:hidden;text-align:center}
+  .pv .pimg{height:220px;background-size:cover;background-position:center}
+  .pv .pbody{padding:26px 24px}
+  .pv .pt{font-size:17px;letter-spacing:.14em;margin-bottom:8px}
+  .pv .pd{font-size:12.5px;opacity:.7;margin-bottom:18px}
+  .pv .pbtn{display:inline-block;border:1px solid var(--accent);color:var(--accent);font-size:11px;letter-spacing:.2em;padding:10px 28px}
+  .pv .pclose{display:flex;justify-content:space-between;font-size:11px;padding:10px 14px;background:#0e0d0b;color:#8b8578}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);background:#171512;color:#efe9dd;padding:12px 28px;font-size:12.5px;border-radius:30px;z-index:200;opacity:0;transition:.4s}
+  .toast.show{transform:translateX(-50%);opacity:1}
+  .note{font-size:11px;color:#a39c8c;margin-top:10px}
+  .empty{color:#a39c8c;font-size:12.5px;padding:20px 0;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="layout">
+<aside>
+  <div class="slogo"><div class="t">DE ORDINAIRE</div><div class="s">ADMIN CONSOLE</div></div>
+  <div class="snav" id="snav"></div>
+  <div class="sfoot">PROTOTYPE — 디자인 검토용 시안<br>데이터는 전부 샘플이다.</div>
+</aside>
+
+<main>
+  <div class="topbar">
+    <div><h1 id="ptitle"></h1><div class="sub" id="psub"></div></div>
+    <div class="roles">
+      <label>권한 시뮬레이션</label>
+      <select id="roleSel" onchange="setRole(this.value)">
+        <option value="super">최고관리자</option>
+        <option value="op">운영자</option>
+        <option value="viewer">뷰어</option>
+      </select>
+      <span class="rolebadge" id="roleBadge">최고관리자</span>
+    </div>
+  </div>
+  <div id="page"></div>
+</main>
+</div>
+
+<div class="mwrap" id="mwrap"><div class="modal" id="modal"></div></div>
+<div class="pvwrap" id="pvwrap" onclick="this.classList.remove('open')"><div class="pv" id="pv" onclick="event.stopPropagation()"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= sample data ================= */
+const IMG='https://cdn-optimized.imweb.me/upload/S202108189c6f150ac2938/';
+const im=id=>IMG+id+'.png?w=200';
+const CATS={bath:'BATH & BODY',beauty:'BEAUTY',objet:'OBJET & ART',food:'FOOD',gift:'GIFT',curated:'CURATED'};
+let PRODUCTS=[
+{id:1,c:'bath',n:'드오디네 애프터롱배스 바디워시',pr:17900,st:'sale',vis:true,stock:120,img:'ef2e3c60a1662'},
+{id:2,c:'bath',n:'드오디네 애프터롱배스 핸드워시',pr:18900,st:'sale',vis:true,stock:98,img:'02c38e7679793'},
+{id:3,c:'bath',n:'드오디네 레인인포레 샴푸',pr:19800,st:'sale',vis:true,stock:74,img:'80b9a8e8643b2'},
+{id:4,c:'bath',n:'드오디네 레인인포레 컨디셔너',pr:21500,st:'sale',vis:true,stock:81,img:'d49d47548e6c7'},
+{id:5,c:'bath',n:'프리미엄 입욕제 Silent Frost',pr:9000,st:'sale',vis:true,stock:210,img:'3c75cda88be51'},
+{id:6,c:'bath',n:'프리미엄 입욕제 Soleil',pr:9000,st:'sale',vis:true,stock:190,img:'75f77cf644a8d'},
+{id:7,c:'bath',n:'프리미엄 입욕제 Rain in Foret',pr:9000,st:'sale',vis:true,stock:175,img:'ec030df504056'},
+{id:8,c:'bath',n:'드오디네 시그니처 에센셜 오일',pr:9000,st:'sale',vis:true,stock:66,img:'0f91e8f3f0964'},
+{id:9,c:'bath',n:'드오디네 누빔 트래블파우치',pr:15000,st:'sale',vis:true,stock:44,img:'503d6ac332c86'},
+{id:10,c:'objet',n:'한줌 달항아리 캔들',pr:39000,st:'sale',vis:true,stock:58,img:'f0b99817acb22'},
+{id:11,c:'objet',n:'달항아리 캔들 [백자/청자]',pr:69000,st:'sale',vis:true,stock:31,img:'516b37b2f211c'},
+{id:12,c:'objet',n:'달항아리 캔들 흑자',pr:69000,st:'soldout',vis:true,stock:0,img:'db8f837961409'},
+{id:13,c:'objet',n:'드오디네 달항아리 캔들 창해',pr:68400,st:'soldout',vis:true,stock:0,img:'e32bf1342a98b'},
+{id:14,c:'objet',n:'달항아리 캔들 미니 3종',pr:166500,st:'soldout',vis:false,stock:0,img:'b2beb4c91387d'},
+{id:15,c:'objet',n:'달항아리 캔들 오브제',pr:300000,st:'sale',vis:true,stock:5,img:'cf81bcc08f846'},
+{id:16,c:'objet',n:'달항아리 액자 5종',pr:130000,st:'sale',vis:true,stock:12,img:'a40609bd2c6c4'},
+{id:17,c:'objet',n:'맷돌 오일워머',pr:134000,st:'sale',vis:true,stock:9,img:'dc690742158ba'},
+{id:18,c:'objet',n:'호롱불_小 철제 캔들 홀더',pr:70600,st:'sale',vis:true,stock:15,img:'e085546079b16'},
+{id:19,c:'objet',n:'호롱불_大 철제 캔들 홀더',pr:91000,st:'sale',vis:true,stock:11,img:'9d513153ecb92'},
+{id:20,c:'objet',n:'조약돌 차주전자_나무손잡이',pr:56000,st:'sale',vis:true,stock:22,img:'343dae9004348'},
+{id:21,c:'objet',n:'조약돌 차주전자_동그라미 손잡이',pr:56000,st:'sale',vis:true,stock:19,img:'faa88aa50f02c'},
+{id:22,c:'objet',n:'드오디네 조약돌 찻잔',pr:8900,st:'sale',vis:true,stock:87,img:'70078fff362ae'},
+{id:23,c:'objet',n:'드오디네 조약돌 차보온대',pr:18000,st:'sale',vis:true,stock:40,img:'3f302db9dfc0e'},
+{id:24,c:'gift',n:'[2026 설] 청화(菁華) 다도세트',pr:189000,st:'hidden',vis:false,stock:30,img:'88f1dfa96673f'},
+{id:25,c:'gift',n:'전용 쇼핑백',pr:2000,st:'sale',vis:true,stock:500,img:'719000c618cbf'},
+{id:26,c:'curated',n:'레인인포레 룸 프래그런스 350ml',pr:42300,st:'soldout',vis:true,stock:0,img:'acfe18aa7a395'}
+];
+let POPUPS=[
+{id:1,t:'2026 설 선물세트 사전예약',from:'2026-01-05',to:'2026-01-25',pos:'메인 진입 시',on:true,img:'88f1dfa96673f',desc:'청화 다도세트 사전예약 오픈. 조기 마감 주의.'},
+{id:2,t:'여름 배스 리추얼 기획전',from:'2026-07-01',to:'2026-07-31',pos:'메인 진입 시',on:false,img:'3c75cda88be51',desc:'입욕제 3종 + 에센셜 오일 여름 프로모션.'},
+];
+let STAFF=[
+{n:'김한영',e:'hanster88@urbanhost.co.kr',role:'super',last:'2026-07-02 09:12'},
+{n:'운영자 A',e:'op-a@urbanhost.co.kr',role:'op',last:'2026-07-01 18:44'},
+{n:'MD B',e:'md-b@urbanhost.co.kr',role:'op',last:'2026-06-30 11:02'},
+{n:'CS C',e:'cs-c@urbanhost.co.kr',role:'viewer',last:'2026-07-02 08:55'},
+];
+const PERMS=[
+['대시보드 열람',true,true,true],
+['상품 등록·수정',true,true,false],
+['상품 삭제',true,false,false],
+['이벤트 팝업 관리',true,true,false],
+['배너·사진 교체',true,true,false],
+['주문 처리·환불',true,true,false],
+['회원·권한 관리',true,false,false],
+['설정 변경',true,false,false],
+];
+/* 샘플 트래픽 (7일) */
+const DAYS=['6/26','6/27','6/28','6/29','6/30','7/1','7/2'];
+const VISITS=[482,517,689,731,528,604,713];
+const ORDERS=[12,15,22,28,14,19,24];
+const CHANNELS=[['네이버 검색',34],['인스타그램',26],['직접 유입',18],['29CM·외부몰',14],['기타',8]];
+const HOURLY=[2,1,1,3,5,9,14,22,30,38,41,44,47,43,39,41,45,52,58,49,37,25,14,6];
+const TOPPAGES=[['/  (메인)',3412],['/objet (오브제&아트)',1287],['/product/한줌-달항아리-캔들',1104],['/bath (배스&바디)',986],['/gift (기프트)',541]];
+
+/* ================= state ================= */
+let role='super', page='dash';
+const NAV=[
+ ['dash','대시보드',null],
+ ['products','상품 관리','상품 등록·수정'],
+ ['popups','이벤트 팝업','이벤트 팝업 관리'],
+ ['banners','배너·사진 관리','배너·사진 교체'],
+ ['traffic','트래픽 분석',null],
+ ['members','회원·권한','회원·권한 관리'],
+];
+const ROLEIDX={super:1,op:2,viewer:3};
+const ROLENAME={super:'최고관리자',op:'운영자',viewer:'뷰어'};
+function can(permName){
+  if(!permName)return true;
+  const row=PERMS.find(r=>r[0]===permName);
+  return row?row[ROLEIDX[role]]:true;
+}
+const fmt=n=>n.toLocaleString();
+function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(window._t);window._t=setTimeout(()=>el.classList.remove('show'),2200);}
+function setRole(r){role=r;const b=document.getElementById('roleBadge');b.textContent=ROLENAME[r];b.className='rolebadge '+(r==='viewer'?'viewer':r==='op'?'op':'');if(!can(NAV.find(n=>n[0]===page)?.[2]))page='dash';render();}
+function go(p){page=p;render();}
+function edit(){return role!=='viewer';}
+
+/* ================= nav & shell ================= */
+function renderNav(){
+  document.getElementById('snav').innerHTML=NAV.map(([id,label,perm])=>{
+    const locked=!can(perm);
+    return `<button class="${page===id?'on':''} ${locked?'locked':''}" onclick="go('${id}')"><span class="dot"></span>${label}${locked?' · 권한 없음':''}</button>`;
+  }).join('');
+}
+const TITLES={dash:['대시보드','오늘의 지표 요약 — 샘플 데이터'],products:['상품 관리','노출·가격·재고·사진을 관리한다'],popups:['이벤트 팝업','기간·위치를 지정해 팝업을 노출한다'],banners:['배너·사진 관리','랜딩 패널·히어로 배경을 교체한다'],traffic:['트래픽 분석','방문·유입·페이지 성과 — 샘플 데이터'],members:['회원·권한','운영진 계정과 역할별 권한을 관리한다']};
+
+/* ================= pages ================= */
+function pageDash(){
+  return `
+  <div class="grid g4" style="margin-bottom:18px">
+    <div class="card kpi"><div class="l">오늘 방문자</div><div class="v">713</div><div class="d up">▲ 18.0% vs 어제</div></div>
+    <div class="card kpi"><div class="l">오늘 매출</div><div class="v">₩1,842,300</div><div class="d up">▲ 12.4% vs 어제</div></div>
+    <div class="card kpi"><div class="l">오늘 주문</div><div class="v">24건</div><div class="d up">▲ 5건</div></div>
+    <div class="card kpi"><div class="l">구매 전환율</div><div class="v">3.37%</div><div class="d down">▼ 0.2%p</div></div>
+  </div>
+  <div class="grid g2" style="margin-bottom:18px">
+    <div class="card"><h3>최근 7일 방문·주문 추이 <span class="more">샘플</span></h3><canvas id="cLine" height="190"></canvas></div>
+    <div class="card"><h3>유입 채널 <span class="more">샘플</span></h3><canvas id="cDonut" height="190"></canvas></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h3>인기 상품 TOP 5</h3><table><tr><th></th><th>상품</th><th>조회</th><th>판매</th></tr>
+      ${[10,11,1,24,17].map((pid,i)=>{const p=PRODUCTS.find(x=>x.id===pid);return `<tr><td><img class="thumb" src="${im(p.img)}"></td><td>${p.n}</td><td>${fmt(1104-i*180)}</td><td>${18-i*3}건</td></tr>`}).join('')}
+    </table></div>
+    <div class="card"><h3>해야 할 일</h3>
+      <table>
+      <tr><td>품절 상품</td><td style="text-align:right"><span class="bdg soldout">4건</span></td></tr>
+      <tr><td>재고 10개 미만</td><td style="text-align:right"><span class="bdg hidden">2건</span></td></tr>
+      <tr><td>진행 중 팝업</td><td style="text-align:right"><span class="bdg on">1건</span></td></tr>
+      <tr><td>미답변 문의 (연동 예정)</td><td style="text-align:right"><span class="bdg hidden">—</span></td></tr>
+      </table>
+      <div class="note">실서비스에서는 쇼핑몰 솔루션(카페24 등) API와 연동해 실데이터가 표시된다.</div>
+    </div>
+  </div>`;
+}
+
+function pageProducts(){
+  const e=edit()&&can('상품 등록·수정');
+  return `
+  <div class="toolrow">
+    <div class="filters">
+      <select style="width:150px" onchange="toast('필터는 시안 동작이다.')"><option>전체 카테고리</option>${Object.values(CATS).map(c=>`<option>${c}</option>`).join('')}</select>
+      <select style="width:120px" onchange="toast('필터는 시안 동작이다.')"><option>전체 상태</option><option>판매중</option><option>품절</option><option>숨김</option></select>
+      <input placeholder="상품명 검색" onkeydown="if(event.key==='Enter')toast('검색은 시안 동작이다.')">
+    </div>
+    <button class="btn pri" ${e?'':'disabled'} onclick="openProduct()">+ 상품 등록</button>
+  </div>
+  <div class="card" style="padding:8px 14px">
+  <table><tr><th></th><th>상품명</th><th>카테고리</th><th>판매가</th><th>재고</th><th>상태</th><th>노출</th><th></th></tr>
+  ${PRODUCTS.map(p=>`
+    <tr>
+      <td><img class="thumb" loading="lazy" src="${im(p.img)}"></td>
+      <td>${p.n}</td>
+      <td style="font-size:11.5px;color:#8b8578">${CATS[p.c]}</td>
+      <td>₩${fmt(p.pr)}</td>
+      <td>${p.stock===0?'<span class="down">0</span>':p.stock<10?`<span style="color:var(--red)">${p.stock}</span>`:p.stock}</td>
+      <td><span class="bdg ${p.st}">${p.st==='sale'?'판매중':p.st==='soldout'?'품절':'숨김'}</span></td>
+      <td><div class="toggle ${p.vis?'on':''} ${e?'':'dis'}" onclick="togVis(${p.id})"></div></td>
+      <td><button class="btn sm" ${e?'':'disabled'} onclick="openProduct(${p.id})">수정</button></td>
+    </tr>`).join('')}
+  </table></div>`;
+}
+function togVis(id){const p=PRODUCTS.find(x=>x.id===id);p.vis=!p.vis;render();toast(p.n+' — '+(p.vis?'노출':'숨김')+' 처리 (시안)');}
+function openProduct(id){
+  const p=id?PRODUCTS.find(x=>x.id===id):null;
+  openModal(`
+    <h2>${p?'상품 수정':'상품 등록'}<button onclick="closeModal()">×</button></h2>
+    <label>대표 이미지 (1:1 · 2000×2000 제작 / 1600 출력)</label>
+    <div class="imgdrop" onclick="toast('실서비스에서 파일 업로더가 연결된다.')">
+      ${p?`<img src="${im(p.img)}">`:''}<div>${p?'클릭해서 이미지 교체':'클릭해서 이미지 업로드'}</div>
+    </div>
+    <label>상품명</label><input id="mpn" value="${p?p.n:''}">
+    <div class="mrow">
+      <div><label>카테고리</label><select id="mpc">${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${p&&p.c===k?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div><label>판매가 (원)</label><input id="mpp" type="number" value="${p?p.pr:''}"></div>
+      <div><label>재고</label><input id="mps" type="number" value="${p?p.stock:''}"></div>
+    </div>
+    <label>상태</label>
+    <select id="mpst"><option value="sale" ${p&&p.st==='sale'?'selected':''}>판매중</option><option value="soldout" ${p&&p.st==='soldout'?'selected':''}>품절</option><option value="hidden" ${p&&p.st==='hidden'?'selected':''}>숨김</option></select>
+    <div class="mfoot">
+      <button class="btn" onclick="closeModal()">취소</button>
+      <button class="btn pri" onclick="saveProduct(${p?p.id:0})">저장</button>
+    </div>`);
+}
+function saveProduct(id){
+  const n=document.getElementById('mpn').value.trim();
+  const pr=parseInt(document.getElementById('mpp').value)||0;
+  const c=document.getElementById('mpc').value;
+  const st=document.getElementById('mpst').value;
+  const stock=parseInt(document.getElementById('mps').value)||0;
+  if(!n){toast('상품명을 입력해달라.');return;}
+  if(id){const p=PRODUCTS.find(x=>x.id===id);Object.assign(p,{n,pr,c,st,stock});}
+  else{PRODUCTS.unshift({id:Date.now(),n,pr,c,st,stock,vis:true,img:'f0b99817acb22'});}
+  closeModal();render();toast('저장했다. (시안 — 실서비스에서 DB 반영)');
+}
+
+function pagePopups(){
+  const e=edit()&&can('이벤트 팝업 관리');
+  return `
+  <div class="toolrow"><div></div><button class="btn pri" ${e?'':'disabled'} onclick="openPopup()">+ 팝업 만들기</button></div>
+  <div class="card" style="padding:8px 14px">
+  <table><tr><th></th><th>제목</th><th>기간</th><th>노출 위치</th><th>상태</th><th>ON/OFF</th><th></th></tr>
+  ${POPUPS.map(pp=>`
+    <tr>
+      <td><img class="thumb" src="${im(pp.img)}"></td>
+      <td>${pp.t}</td>
+      <td style="font-size:12px">${pp.from} ~ ${pp.to}</td>
+      <td style="font-size:12px">${pp.pos}</td>
+      <td><span class="bdg ${pp.on?'on':'off'}">${pp.on?'진행중':'중지'}</span></td>
+      <td><div class="toggle ${pp.on?'on':''} ${e?'':'dis'}" onclick="togPop(${pp.id})"></div></td>
+      <td><button class="btn sm" onclick="previewPop(${pp.id})">미리보기</button> <button class="btn sm" ${e?'':'disabled'} onclick="openPopup(${pp.id})">수정</button></td>
+    </tr>`).join('')}
+  </table></div>
+  <div class="note">팝업은 기간 내에만 노출되고, "오늘 하루 보지 않기" 옵션이 기본 포함된다.</div>`;
+}
+function togPop(id){const p=POPUPS.find(x=>x.id===id);p.on=!p.on;render();toast(p.t+' — '+(p.on?'노출 시작':'중지')+' (시안)');}
+function openPopup(id){
+  const p=id?POPUPS.find(x=>x.id===id):null;
+  openModal(`
+    <h2>${p?'팝업 수정':'팝업 만들기'}<button onclick="closeModal()">×</button></h2>
+    <label>팝업 이미지 (권장 800×440, 400KB 이하)</label>
+    <div class="imgdrop" onclick="toast('실서비스에서 파일 업로더가 연결된다.')">${p?`<img src="${im(p.img)}">`:''}<div>클릭해서 이미지 ${p?'교체':'업로드'}</div></div>
+    <label>제목</label><input id="mt" value="${p?p.t:''}">
+    <label>설명</label><textarea id="md" rows="2">${p?p.desc:''}</textarea>
+    <div class="mrow">
+      <div><label>시작일</label><input id="mf" type="date" value="${p?p.from:''}"></div>
+      <div><label>종료일</label><input id="mto" type="date" value="${p?p.to:''}"></div>
+    </div>
+    <label>노출 위치</label>
+    <select id="mpos"><option>메인 진입 시</option><option>카테고리 진입 시</option><option>상품 상세</option></select>
+    <div class="mfoot">
+      <button class="btn" onclick="closeModal()">취소</button>
+      <button class="btn pri" onclick="savePopup(${p?p.id:0})">저장</button>
+    </div>`);
+}
+function savePopup(id){
+  const t=document.getElementById('mt').value.trim();
+  if(!t){toast('제목을 입력해달라.');return;}
+  const o={t,desc:document.getElementById('md').value,from:document.getElementById('mf').value,to:document.getElementById('mto').value,pos:document.getElementById('mpos').value};
+  if(id){Object.assign(POPUPS.find(x=>x.id===id),o);}
+  else{POPUPS.unshift({id:Date.now(),...o,on:false,img:'f0b99817acb22'});}
+  closeModal();render();toast('저장했다. (시안)');
+}
+function previewPop(id){
+  const p=POPUPS.find(x=>x.id===id);
+  document.getElementById('pv').innerHTML=`
+    <div class="pimg" style="background-image:url('${IMG+p.img}.png?w=800')"></div>
+    <div class="pbody"><div class="pt">${p.t}</div><div class="pd">${p.desc}</div><a class="pbtn" onclick="toast('시안 동작이다.')">자세히 보기</a></div>
+    <div class="pclose"><span onclick="document.getElementById('pvwrap').classList.remove('open')">오늘 하루 보지 않기</span><span onclick="document.getElementById('pvwrap').classList.remove('open')">닫기 ×</span></div>`;
+  document.getElementById('pvwrap').classList.add('open');
+}
+
+function pageBanners(){
+  const e=edit()&&can('배너·사진 교체');
+  const slots=[
+    ['INTRO 히어로','2560×1440 · WebP','https://d8j0ntlcm91z4.cloudfront.net/user_3EWgBXQoBnnPVTLIUWHPYa0Ejhp/hf_20260702_081116_73148d24-8bdc-4127-ad71-2c93abbbf146.png'],
+    ['BATH & BODY 패널','2560×1440',IMG+'ef2e3c60a1662.png?w=800'],
+    ['OBJET & ART 패널','2560×1440',IMG+'516b37b2f211c.png?w=800'],
+    ['GIFT 패널','2560×1440',IMG+'88f1dfa96673f.png?w=800'],
+    ['CURATED 패널','2560×1440',IMG+'acfe18aa7a395.png?w=800'],
+    ['히어로 브랜드 필름','1920×1080 MP4 · 6~12초 루프',null],
+  ];
+  return `
+  <div class="slots">
+    ${slots.map(([n,spec,url])=>`
+    <div class="slot">
+      <div class="simg" style="${url?`background-image:url('${url}')`:'background:#26221c;display:flex;align-items:center;justify-content:center'}">
+        <span class="stag">${n}</span>${url?'':'<span style="color:#7d786c;font-size:11px">영상 미등록</span>'}
+      </div>
+      <div class="sbody">
+        <div><div class="sname">${n}</div><div class="sspec">${spec}</div></div>
+        <button class="btn sm" ${e?'':'disabled'} onclick="toast('실서비스에서 파일 업로더가 연결된다.')">교체</button>
+      </div>
+    </div>`).join('')}
+  </div>
+  <div class="note">규격 상세는 「Deordinaire_이미지·영상_규격가이드.md」 참조. BEAUTY·FOOD 패널은 COMING SOON 그래픽을 사용 중이다.</div>`;
+}
+
+function pageTraffic(){
+  return `
+  <div class="grid g4" style="margin-bottom:18px">
+    <div class="card kpi"><div class="l">7일 방문자</div><div class="v">${fmt(VISITS.reduce((a,b)=>a+b))}</div><div class="d up">▲ 9.3% vs 지난주</div></div>
+    <div class="card kpi"><div class="l">7일 주문</div><div class="v">${ORDERS.reduce((a,b)=>a+b)}건</div><div class="d up">▲ 11건</div></div>
+    <div class="card kpi"><div class="l">평균 체류시간</div><div class="v">2:41</div><div class="d up">▲ 0:18</div></div>
+    <div class="card kpi"><div class="l">이탈률</div><div class="v">41.2%</div><div class="d up">▼ 2.1%p</div></div>
+  </div>
+  <div class="grid g2" style="margin-bottom:18px">
+    <div class="card"><h3>시간대별 방문 (오늘) <span class="more">샘플</span></h3><canvas id="cBar" height="190"></canvas></div>
+    <div class="card"><h3>유입 채널 <span class="more">샘플</span></h3><canvas id="cDonut" height="190"></canvas></div>
+  </div>
+  <div class="card"><h3>페이지별 조회 TOP 5</h3>
+    <table><tr><th>페이지</th><th style="text-align:right">조회수</th></tr>
+    ${TOPPAGES.map(([p,v])=>`<tr><td>${p}</td><td style="text-align:right">${fmt(v)}</td></tr>`).join('')}
+    </table>
+    <div class="note">실서비스에서는 GA4 또는 몰 솔루션 통계 API 연동으로 대체한다.</div>
+  </div>`;
+}
+
+function pageMembers(){
+  const e=edit()&&can('회원·권한 관리');
+  return `
+  <div class="grid g2">
+    <div class="card"><h3>운영진 계정 ${e?`<button class="btn sm" onclick="toast('실서비스에서 초대 메일이 발송된다.')">+ 초대</button>`:''}</h3>
+      <table><tr><th>이름</th><th>이메일</th><th>역할</th><th>최근 접속</th></tr>
+      ${STAFF.map(s=>`<tr><td>${s.n}</td><td style="font-size:12px;color:#8b8578">${s.e}</td>
+        <td>${e?`<select style="width:110px;padding:5px 8px;font-size:12px" onchange="toast('역할 변경 (시안)')">
+          <option ${s.role==='super'?'selected':''}>최고관리자</option><option ${s.role==='op'?'selected':''}>운영자</option><option ${s.role==='viewer'?'selected':''}>뷰어</option></select>`
+          :`<span class="bdg ${s.role==='super'?'on':s.role==='op'?'sale':'hidden'}">${ROLENAME[s.role]}</span>`}</td>
+        <td style="font-size:12px;color:#8b8578">${s.last}</td></tr>`).join('')}
+      </table>
+    </div>
+    <div class="card perm"><h3>역할별 권한 매트릭스</h3>
+      <table><tr><th>권한</th><th>최고관리자</th><th>운영자</th><th>뷰어</th></tr>
+      ${PERMS.map(r=>`<tr><td>${r[0]}</td>${[1,2,3].map(i=>`<td><input type="checkbox" ${r[i]?'checked':''} ${e&&!(i===1)?'':'disabled'} onchange="toast('권한 변경 (시안)')"></td>`).join('')}</tr>`).join('')}
+      </table>
+      <div class="note">최고관리자 권한은 고정. 좌측 상단 "권한 시뮬레이션"으로 역할을 바꾸면 메뉴·버튼이 실제로 잠기는 것을 확인할 수 있다.</div>
+    </div>
+  </div>`;
+}
+
+/* ================= charts (no lib) ================= */
+function drawLine(){
+  const cv=document.getElementById('cLine');if(!cv)return;
+  const dpr=window.devicePixelRatio||1;const W=cv.clientWidth,H=190;cv.width=W*dpr;cv.height=H*dpr;
+  const x=cv.getContext('2d');x.scale(dpr,dpr);
+  const max=Math.max(...VISITS)*1.15,pad=30,iw=(W-pad*2)/(DAYS.length-1);
+  x.strokeStyle='#eee8da';x.lineWidth=1;
+  for(let i=0;i<4;i++){const y=20+(H-50)/3*i;x.beginPath();x.moveTo(pad,y);x.lineTo(W-pad,y);x.stroke();}
+  /* visits */
+  x.strokeStyle='#1F3864';x.lineWidth=2;x.beginPath();
+  VISITS.forEach((v,i)=>{const px=pad+iw*i,py=20+(H-50)*(1-v/max);i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();
+  x.fillStyle='#1F3864';VISITS.forEach((v,i)=>{const px=pad+iw*i,py=20+(H-50)*(1-v/max);x.beginPath();x.arc(px,py,3,0,7);x.fill();});
+  /* orders (scaled x20) */
+  x.strokeStyle='#c9b48a';x.lineWidth=2;x.beginPath();
+  ORDERS.forEach((v,i)=>{const px=pad+iw*i,py=20+(H-50)*(1-(v*20)/max);i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();
+  x.fillStyle='#8b8578';x.font='10px Pretendard, sans-serif';x.textAlign='center';
+  DAYS.forEach((d,i)=>x.fillText(d,pad+iw*i,H-8));
+  x.textAlign='left';x.fillStyle='#1F3864';x.fillRect(pad,H-2,10,3);x.fillStyle='#8b8578';x.fillText('방문',pad+14,H+1);
+  x.fillStyle='#c9b48a';x.fillRect(pad+50,H-2,10,3);x.fillStyle='#8b8578';x.fillText('주문(×20)',pad+64,H+1);
+}
+function drawDonut(){
+  const cv=document.getElementById('cDonut');if(!cv)return;
+  const dpr=window.devicePixelRatio||1;const W=cv.clientWidth,H=190;cv.width=W*dpr;cv.height=H*dpr;
+  const x=cv.getContext('2d');x.scale(dpr,dpr);
+  const cx=H/2,cy=H/2,r=H/2-18;
+  const colors=['#1F3864','#c9b48a','#4a7c59','#8a8070','#d5cfc0'];
+  let a=-Math.PI/2;
+  CHANNELS.forEach(([n,v],i)=>{
+    const a2=a+v/100*Math.PI*2;
+    x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,r,a,a2);x.closePath();
+    x.fillStyle=colors[i];x.fill();a=a2;
+  });
+  x.beginPath();x.arc(cx,cy,r*.58,0,7);x.fillStyle='#fff';x.fill();
+  x.font='11px Pretendard, sans-serif';x.textAlign='left';
+  CHANNELS.forEach(([n,v],i)=>{
+    const ly=28+i*26;
+    x.fillStyle=colors[i];x.fillRect(H+16,ly-8,10,10);
+    x.fillStyle='#2b2a28';x.fillText(`${n}`,H+32,ly);
+    x.fillStyle='#8b8578';x.fillText(`${v}%`,H+130,ly);
+  });
+}
+function drawBar(){
+  const cv=document.getElementById('cBar');if(!cv)return;
+  const dpr=window.devicePixelRatio||1;const W=cv.clientWidth,H=190;cv.width=W*dpr;cv.height=H*dpr;
+  const x=cv.getContext('2d');x.scale(dpr,dpr);
+  const max=Math.max(...HOURLY)*1.1,pad=26,bw=(W-pad*2)/24;
+  HOURLY.forEach((v,i)=>{
+    const bh=(H-46)*(v/max);
+    x.fillStyle=i>=18&&i<=20?'#1F3864':'#d9d1bf';
+    x.fillRect(pad+bw*i+1,H-30-bh,bw-3,bh);
+  });
+  x.fillStyle='#8b8578';x.font='9.5px Pretendard, sans-serif';x.textAlign='center';
+  [0,6,12,18,23].forEach(h=>x.fillText(h+'시',pad+bw*h+bw/2,H-12));
+}
+
+/* ================= modal ================= */
+function openModal(html){document.getElementById('modal').innerHTML=html;document.getElementById('mwrap').classList.add('open');}
+function closeModal(){document.getElementById('mwrap').classList.remove('open');}
+document.getElementById('mwrap').addEventListener('click',e=>{if(e.target.id==='mwrap')closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();document.getElementById('pvwrap').classList.remove('open');}});
+
+/* ================= render ================= */
+function render(){
+  renderNav();
+  const [t,s]=TITLES[page];
+  document.getElementById('ptitle').textContent=t;
+  document.getElementById('psub').textContent=s;
+  const P={dash:pageDash,products:pageProducts,popups:pagePopups,banners:pageBanners,traffic:pageTraffic,members:pageMembers};
+  document.getElementById('page').innerHTML=P[page]();
+  requestAnimationFrame(()=>{drawLine();drawDonut();drawBar();});
+}
+window.addEventListener('resize',()=>{drawLine();drawDonut();drawBar();});
+render();
+</script>
+</body>
+</html>
+    
